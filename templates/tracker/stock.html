@@ -1,0 +1,179 @@
+{% extends "tracker/base_staff.html" %}
+{% load humanize %}
+{% block title %}Issue stock · Staff{% endblock %}
+{% block connection %}default · hc_app{% endblock %}
+
+{% block content %}
+{{ stock_map|json_script:"stock-map" }}
+<div class="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 py-7 sm:px-6 lg:px-8 lg:py-10" x-data="stock('{{ selected_item }}')">
+
+  {# ---------- Page header + pick-up point switcher ---------- #}
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-[15px] text-muted">Commodities and IEC materials, clause 5.7</p>
+      <h1 class="mt-1 text-[28px] font-bold tracking-tight text-navy lg:text-4xl">Issue stock</h1>
+    </div>
+    <nav class="seg max-w-full overflow-x-auto" aria-label="Pick-up point">
+      {% for loc in locations %}
+        <a href="?location={{ loc.pk }}&item={{ selected_item }}" class="seg-btn whitespace-nowrap {% if loc.pk == selected_location.pk %}seg-on{% endif %}" {% if loc.pk == selected_location.pk %}aria-current="page"{% endif %}>{{ loc.name }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+    {# ---------- Issue form ---------- #}
+    <form id="issue-form" method="post" class="panel space-y-4 p-5 lg:sticky lg:top-24 lg:p-6" @submit="busy = true">
+      <h2 class="text-lg font-bold text-navy lg:text-xl">New issue</h2>
+
+      <div>
+        <label for="item" class="field-label">Item</label>
+        <select id="item" name="item" x-model="item" class="select">
+          {% for it in items %}<option value="{{ it.pk }}">{{ it.name }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <span class="field-label">Pick-up point</span>
+        <p class="flex h-12 items-center gap-2 rounded-lg bg-mist px-3.5 text-ink">{% include "partials/icon.html" with name="pin" cls="h-4 w-4 text-brand" %}{{ selected_location.name }}</p>
+      </div>
+
+      <div>
+        <label for="event" class="field-label">For event <span class="font-normal text-subtle">(optional)</span></label>
+        <select id="event" name="event" class="select">
+          <option value="">Walk-in, no event</option>
+          {% for ev in events %}<option value="{{ ev.pk }}">{{ ev.title }}, {{ ev.event_date|date:"j M" }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <div class="flex items-baseline justify-between">
+          <label for="quantity" class="field-label">Quantity</label>
+          <span class="tabular text-sm text-muted"><span x-text="available">0</span> in stock here</span>
+        </div>
+        <div class="flex h-12 items-center rounded-lg border bg-white transition focus-within:ring-4" :class="over ? 'border-warn-500 focus-within:ring-sun/30' : 'border-[#B7C3D1] focus-within:border-brand focus-within:ring-brand/15'">
+          <button type="button" @click="qty = Math.max(1, qty - 1)" class="flex h-full w-12 items-center justify-center rounded-l-lg text-subtle transition hover:bg-mist hover:text-navy" aria-label="One less">{% include "partials/icon.html" with name="minus" cls="h-4 w-4" %}</button>
+          <input id="quantity" type="number" name="quantity" min="1" max="10000" x-model.number="qty" value="1" class="tabular h-full w-full border-0 bg-transparent text-center text-lg font-semibold focus:outline-none focus:ring-0">
+          <button type="button" @click="qty = qty + 1" class="flex h-full w-12 items-center justify-center rounded-r-lg text-subtle transition hover:bg-mist hover:text-navy" aria-label="One more">{% include "partials/icon.html" with name="plus" cls="h-4 w-4" %}</button>
+        </div>
+        <p x-show="over" x-cloak x-transition class="mt-2 flex gap-2 rounded-lg bg-sun-50 px-3 py-2 text-sm text-warn">{% include "partials/icon.html" with name="alert" cls="mt-0.5 h-4 w-4" %}<span>That's more than the <span x-text="available"></span> in stock. PostgreSQL will refuse it and roll back. Try it to see.</span></p>
+      </div>
+
+      <button class="btn-primary w-full" :disabled="busy">
+        <span x-show="!busy">Issue stock</span>
+        <span x-show="busy" x-cloak>Locking the row…</span>
+      </button>
+      <p x-show="crash" x-cloak class="text-center text-sm font-semibold text-bad">Crash simulation is on: this issue will roll back.</p>
+      {% csrf_token %}
+      <input type="hidden" name="location" value="{{ selected_location.pk }}">
+    </form>
+
+    <div class="flex min-w-0 flex-col gap-6">
+      {# ---------- Stock levels ---------- #}
+      <section class="panel p-5 lg:p-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 class="text-lg font-bold text-navy lg:text-xl">In stock at {{ selected_location.name }}</h2>
+          <code class="font-mono text-xs text-subtle">table stock_level</code>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          {% for row in stock_rows %}
+            <button type="button" @click="item = '{{ row.item_id }}'" :aria-pressed="item === '{{ row.item_id }}'"
+                    class="rounded-xl border p-3.5 text-left transition hover:-translate-y-0.5 sm:p-4 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20"
+                    :class="item === '{{ row.item_id }}' ? 'border-brand bg-sky-50 shadow-[inset_0_0_0_1px_#14508C]' : '{% if row.is_low %}border-sun/60 bg-sun-50/60{% else %}border-line bg-white{% endif %}'">
+              <span class="flex items-start justify-between gap-2">
+                <span class="text-[15px] font-semibold leading-snug sm:text-base">{{ row.item.name }}</span>
+                {% if row.is_low %}<span class="rounded-md bg-sun px-1.5 py-0.5 text-[11px] font-bold text-ink">Low</span>{% endif %}
+              </span>
+              <span class="tabular mt-1 block text-[26px] font-extrabold sm:text-[32px] leading-tight tracking-tight {% if row.is_low %}text-warn{% else %}text-navy{% endif %}">{{ row.quantity|intcomma }}</span>
+              <span class="relative mt-2 block h-1.5 rounded-full bg-line" title="Reorder level marked at {{ row.item.reorder_level }}">
+                <span class="bar-fill absolute inset-y-0 left-0 rounded-full {% if row.is_low %}bg-warn-500{% else %}bg-brand{% endif %}" style="width: {{ row.level_pct }}%"></span>
+                <span class="absolute -top-1 bottom-[-4px] left-[20%] w-0.5 rounded bg-ink/40"></span>
+              </span>
+              <span class="mt-1.5 block text-[13px] text-muted">Reorder at {{ row.item.reorder_level }}</span>
+            </button>
+          {% empty %}
+            <p class="text-muted sm:col-span-2">Nothing stocked here yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+      {# ---------- SQL console ---------- #}
+      <section class="overflow-hidden rounded-2xl bg-[#0B1E33] text-[#C9D6E4] shadow-lift">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 lg:px-6">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-sun">{% include "partials/icon.html" with name="terminal" cls="h-[18px] w-[18px]" %}</span>
+            <div>
+              <h2 class="font-bold text-white">What the database did</h2>
+              <p class="text-[13px] text-[#8FA3B8]">The SQL behind your last issue</p>
+            </div>
+          </div>
+          <label class="group flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 transition" :class="crash ? 'border-[#FF9C8F]/50 bg-[#FF9C8F]/10' : 'border-sun/40 hover:bg-white/5'">
+            <span class="text-sm font-semibold" :class="crash ? 'text-[#FF9C8F]' : 'text-sun'">{% include "partials/icon.html" with name="zap" cls="mr-1 inline h-4 w-4 -translate-y-px" %}Simulate a crash</span>
+            <input type="checkbox" name="simulate_crash" form="issue-form" x-model="crash" class="peer sr-only">
+            <span class="switch bg-white/20 peer-checked:bg-[#FF9C8F]"><span class="switch-dot"></span></span>
+          </label>
+        </div>
+        <div class="px-5 py-4 lg:px-6">
+          {% if log %}
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <span class="text-[13px] text-[#8FA3B8]">One transaction, line by line</span>
+              <span class="stamp rounded-md px-2.5 py-1 font-mono text-xs font-bold {% if log_status == 'ok' %}bg-[#7FD6A8]/15 text-[#7FD6A8]{% else %}bg-[#FF9C8F]/15 text-[#FF9C8F]{% endif %}" style="animation-delay: {{ log|length }}50ms">{% if log_status == 'ok' %}COMMITTED{% else %}ROLLED BACK{% endif %}</span>
+            </div>
+          {% endif %}
+          <ol class="font-mono text-[12.5px] leading-6 lg:text-[13px] [&>li]:py-0.5">
+            {% for line in log %}
+              <li class="sql-line flex gap-4" style="animation-delay: {{ forloop.counter0 }}50ms">
+                <span class="w-5 shrink-0 select-none text-right text-[#4F6680]">{{ forloop.counter }}</span>
+                <span class="min-w-0 whitespace-pre-wrap break-words {% if line.kind == 'ok' %}font-medium text-[#7FD6A8]{% elif line.kind == 'err' %}font-medium text-[#FF9C8F]{% elif line.text|slice:':2' == '  ' %}text-[#8FA3B8]{% endif %}">{{ line.text }}</span>
+              </li>
+            {% empty %}
+              <li class="font-sans text-sm text-[#8FA3B8]">Issue something to see BEGIN, the row lock, and COMMIT or ROLLBACK.</li>
+            {% endfor %}
+          </ol>
+        </div>
+      </section>
+
+      {# ---------- Recent movements ---------- #}
+      <section class="panel overflow-hidden">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 px-5 pb-3 pt-5 lg:px-6">
+          <h2 class="text-lg font-bold text-navy">Recent movements here</h2>
+          <code class="font-mono text-xs text-subtle">table stock_movement</code>
+        </div>
+        {% if movements %}
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[520px] text-[15px]">
+              <thead><tr class="bg-mist/70 text-left text-[13px] text-muted"><th class="py-2.5 pl-5 pr-3 font-semibold lg:pl-6">When</th><th class="px-3 py-2.5 font-semibold">Item</th><th class="px-3 py-2.5 text-right font-semibold">Change</th><th class="py-2.5 pl-3 pr-5 font-semibold lg:pr-6">For</th></tr></thead>
+              <tbody class="divide-y divide-line">
+                {% for m in movements %}
+                  <tr>
+                    <td class="tabular whitespace-nowrap py-3 pl-5 pr-3 text-muted lg:pl-6">{{ m.moved_at|date:"j M, H:i" }}</td>
+                    <td class="px-3 py-3">{{ m.item.name }}</td>
+                    <td class="tabular px-3 py-3 text-right font-bold {% if m.qty_change < 0 %}text-bad{% else %}text-ok{% endif %}">{% if m.qty_change > 0 %}+{% endif %}{{ m.qty_change }}</td>
+                    <td class="py-3 pl-3 pr-5 text-muted lg:pr-6">{{ m.event.title|default:"Walk-in" }}{% if m.user %} <span class="text-subtle">by {{ m.user.username }}</span>{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="px-5 pb-5 text-muted lg:px-6">No stock has moved here yet. Each issue adds a row.</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Form state for Alpine: chosen item, quantity, and a warning before an over-issue.
+  function stock(selectedItem) {
+    const levels = JSON.parse(document.getElementById("stock-map").textContent);
+    return {
+      item: selectedItem,
+      qty: 1,
+      crash: false,
+      busy: false,
+      get available() { return levels[this.item] ?? 0; },
+      get over() { return this.qty > this.available; },
+    };
+  }
+</script>
+{% endblock %}

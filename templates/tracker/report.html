@@ -1,0 +1,149 @@
+{% extends "tracker/base_staff.html" %}
+{% load humanize %}
+{% block title %}Quarterly report · Staff{% endblock %}
+{% block connection %}reports · hc_report (read-only){% endblock %}
+
+{% block content %}
+<div class="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 py-7 sm:px-6 lg:px-8 lg:py-10" x-data="{ filter: 'all' }">
+
+  {# ---------- Page header ---------- #}
+  <div class="flex flex-wrap items-end justify-between gap-5">
+    <div>
+      <p class="text-[15px] text-muted">Monitoring and evaluation, policy clause 7.0</p>
+      <h1 class="mt-1 text-[28px] font-bold tracking-tight text-navy lg:text-4xl">{{ quarter_label }} <span class="block text-lg font-medium text-muted lg:inline lg:text-2xl">{{ quarter_range }}</span></h1>
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        {% if db.ok %}
+          <span class="pill" title="SELECT 1 on the reports connection">
+            <span class="live-dot h-2 w-2 rounded-full bg-ok"></span> Database connected <span class="tabular text-muted">{{ db.ms }} ms</span>
+          </span>
+        {% else %}
+          <span class="pill border-bad/30 bg-bad-50 text-bad"><span class="h-2 w-2 rounded-full bg-bad"></span> Database unreachable</span>
+        {% endif %}
+        <span class="pill border-sun/40 bg-sun-50 text-warn">Demo data</span>
+      </div>
+    </div>
+    <div class="no-print flex flex-wrap items-center gap-2.5">
+      <form method="get">
+        <label for="q" class="sr-only">Quarter</label>
+        <select id="q" name="q" onchange="this.form.submit()" class="select h-11 w-auto min-w-[15rem] text-[15px]">
+          {% for option in quarter_options %}<option value="{{ option.value }}" {% if option.value == selected_quarter %}selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </form>
+      <button type="button" onclick="window.print()" class="btn-primary h-11">{% include "partials/icon.html" with name="download" cls="h-[18px] w-[18px]" %} Export report as PDF</button>
+    </div>
+  </div>
+
+  {# ---------- KPI cards ---------- #}
+  <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <div class="tile p-4 sm:p-5">
+      <div class="flex items-start justify-between gap-2"><p class="text-sm text-muted sm:text-[15px]">Students reached</p><span class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-brand min-[420px]:flex">{% include "partials/icon.html" with name="users" cls="h-[18px] w-[18px]" %}</span></div>
+      <p class="tabular mt-1 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[34px] text-navy">{{ summary.reached|intcomma }}</p>
+      <p class="text-sm text-muted">at events this quarter</p>
+    </div>
+    <div class="tile p-4 sm:p-5">
+      <div class="flex items-start justify-between gap-2"><p class="text-sm text-muted sm:text-[15px]">Events held</p><span class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-brand min-[420px]:flex">{% include "partials/icon.html" with name="calendar" cls="h-[18px] w-[18px]" %}</span></div>
+      <p class="tabular mt-1 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[34px] text-navy">{{ summary.events_held }}</p>
+      <p class="text-sm text-muted">{{ summary.events_planned }} more planned</p>
+    </div>
+    <div class="tile p-4 sm:p-5">
+      <div class="flex items-start justify-between gap-2"><p class="text-sm text-muted sm:text-[15px]">Spent (UGX)</p><span class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-brand min-[420px]:flex">{% include "partials/icon.html" with name="banknote" cls="h-[18px] w-[18px]" %}</span></div>
+      <p class="tabular mt-1 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[34px] text-navy">{{ summary.spent_m }}</p>
+      <p class="text-sm text-muted">of {{ summary.budget_m }} annual budget</p>
+      <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-line"><div class="bar-fill h-full rounded-full bg-brand" style="width: {{ summary.spent_pct }}%"></div></div>
+    </div>
+    <a href="{% url 'tracker:stock' %}" class="group rounded-xl border p-4 transition sm:p-5 hover:-translate-y-0.5 hover:shadow-lift {% if summary.low_stock %}border-sun/50 bg-sun-50 text-warn{% else %}border-line bg-white text-ok{% endif %}">
+      <div class="flex items-start justify-between"><p class="text-[15px] font-semibold">Low stock</p><span class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/70 min-[420px]:flex">{% include "partials/icon.html" with name="package" cls="h-[18px] w-[18px]" %}</span></div>
+      <p class="tabular mt-1 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[34px]">{% if summary.low_stock %}{{ summary.low_stock|length }} item{{ summary.low_stock|length|pluralize }}{% else %}All good{% endif %}</p>
+      <ul class="mt-0.5 space-y-0.5 text-sm">
+        {% for row in summary.low_stock|slice:":2" %}<li class="truncate">{{ row.0 }}, {{ row.1 }} <span class="tabular font-semibold">({{ row.2 }})</span></li>{% empty %}<li>Everything is above its reorder level</li>{% endfor %}
+        {% if summary.low_stock|length > 2 %}<li class="font-semibold underline underline-offset-2">and {{ summary.low_stock|length|add:"-2" }} more</li>{% endif %}
+      </ul>
+    </a>
+  </div>
+
+  {# ---------- Budget lines ---------- #}
+  <section class="panel overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line px-5 py-5 lg:px-7">
+      <div>
+        <h2 class="text-xl font-bold tracking-tight text-navy lg:text-[22px]">Progress against the policy budget</h2>
+        <p class="mt-0.5 text-sm text-muted">Nine budget lines from the MUST HIV/AIDS Policy, pages 12 to 13. Amounts in UGX.</p>
+      </div>
+      <div class="seg no-print" role="group" aria-label="Show budget lines">
+        <button type="button" @click="filter = 'all'" :class="filter === 'all' && 'seg-on'" class="seg-btn">All <span class="tabular text-subtle">{{ lines|length }}</span></button>
+        <button type="button" @click="filter = 'behind'" :class="filter === 'behind' && 'seg-on'" class="seg-btn">Behind <span class="tabular text-subtle">{{ summary.behind }}</span></button>
+        <button type="button" @click="filter = 'on_track'" :class="filter === 'on_track' && 'seg-on'" class="seg-btn">On track <span class="tabular text-subtle">{{ summary.on_track }}</span></button>
+      </div>
+    </div>
+
+    {# Mobile: one card per line #}
+    <ul class="divide-y divide-line lg:hidden">
+      {% for line in lines %}
+        <li class="px-5 py-4" x-show="filter === 'all' || filter === '{{ line.status }}'" x-transition.opacity>
+          <div class="flex items-baseline justify-between gap-3"><span class="font-bold text-link">{{ line.name }}</span>{% if line.pct is not None %}<span class="tabular text-sm font-bold {% if line.behind %}text-warn-500{% endif %}">{{ line.pct }}%</span>{% endif %}</div>
+          <p class="mt-1 text-sm text-muted">{{ line.indicator }}</p>
+          {% if line.pct is not None %}<div class="mt-2.5 h-2 overflow-hidden rounded-full bg-line"><div class="bar-fill h-full rounded-full {% if line.behind %}bg-warn-500{% else %}bg-brand{% endif %}" style="width: {{ line.pct }}%"></div></div>{% endif %}
+          <p class="tabular mt-2 text-sm text-muted">Spent {{ line.spent|intcomma }} of {{ line.budget|intcomma }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+
+    {# Desktop: table #}
+    <div class="hidden overflow-x-auto lg:block">
+      <table class="w-full min-w-[960px] text-[15px]">
+        <thead>
+          <tr class="bg-mist/70 text-left text-[13px] font-semibold text-muted">
+            <th scope="col" class="py-3 pl-7 pr-3 font-semibold">Policy activity</th>
+            <th scope="col" class="px-3 py-3 font-semibold">Target</th>
+            <th scope="col" class="px-3 py-3 font-semibold">Achieved</th>
+            <th scope="col" class="px-3 py-3 text-right font-semibold">Budget</th>
+            <th scope="col" class="px-3 py-3 text-right font-semibold">Spent</th>
+            <th scope="col" class="w-60 py-3 pl-6 pr-7 font-semibold">Progress</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+          {% for line in lines %}
+            <tr class="transition hover:bg-sky-50/50" x-show="filter === 'all' || filter === '{{ line.status }}'">
+              <td class="py-4 pl-7 pr-3">
+                <p class="font-bold text-link">{{ line.name }}</p>
+                <p class="mt-0.5 text-[13px] text-muted">{{ line.indicator }}</p>
+              </td>
+              <td class="tabular px-3 py-4 text-muted">{% if line.target %}{{ line.target|intcomma }} {% if line.measure == "events" %}event{{ line.target|pluralize }}{% else %}people{% endif %}{% else %}<span class="text-subtle">None set</span>{% endif %}</td>
+              <td class="tabular px-3 py-4">{% if line.measure == "events" %}{{ line.reached }} event{{ line.reached|pluralize }}{% elif line.measure == "people" %}{{ line.reached|intcomma }} people{% else %}<span class="text-muted">Not counted</span>{% endif %}</td>
+              <td class="tabular px-3 py-4 text-right">{{ line.budget|intcomma }}</td>
+              <td class="tabular px-3 py-4 text-right">{{ line.spent|intcomma }}<span class="block text-[12px] text-subtle">{{ line.spent_pct }}% of budget</span></td>
+              <td class="py-4 pl-6 pr-7">
+                {% if line.pct is not None %}
+                  <div class="flex items-center gap-3">
+                    <div class="h-2 flex-1 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow="{{ line.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ line.name }}">
+                      <div class="bar-fill h-full rounded-full {% if line.behind %}bg-warn-500{% else %}bg-brand{% endif %}" style="width: {{ line.pct }}%; animation-delay: {{ forloop.counter0 }}0ms"></div>
+                    </div>
+                    <span class="tabular w-11 text-right text-sm font-bold {% if line.behind %}text-warn-500{% endif %}">{{ line.pct }}%</span>
+                  </div>
+                  {% if line.behind %}<p class="mt-1 text-[12px] font-semibold text-warn">Behind target</p>{% endif %}
+                {% else %}
+                  <span class="text-sm text-muted">No numeric target</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          <tr x-show="(filter === 'behind' && {{ summary.behind }} === 0) || (filter === 'on_track' && {{ summary.on_track }} === 0)" x-cloak>
+            <td colspan="6" class="px-7 py-8 text-center text-muted">No budget lines match this filter this quarter.</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="border-t-2 border-navy font-extrabold text-ink">
+            <td class="py-4 pl-7">Total</td><td></td><td></td>
+            <td class="tabular px-3 py-4 text-right">{{ summary.budget|intcomma }}</td>
+            <td class="tabular px-3 py-4 text-right">{{ summary.spent|intcomma }}</td>
+            <td class="py-4 pl-6 pr-7 text-sm font-semibold text-muted">{{ summary.spent_pct }}% of the year's budget spent</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <p class="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line bg-mist/60 px-5 py-3.5 text-[13px] text-muted lg:px-7">
+      {% include "partials/icon.html" with name="database" cls="h-3.5 w-3.5" %}
+      From views <code class="font-mono text-[12px] text-navy">v_policy_lines</code> and <code class="font-mono text-[12px] text-navy">v_quarterly_progress</code> on the read-only <code class="font-mono text-[12px] text-navy">reports</code> connection (role hc_report). 3 queries in {{ query_ms }} ms.
+    </p>
+  </section>
+</div>
+{% endblock %}

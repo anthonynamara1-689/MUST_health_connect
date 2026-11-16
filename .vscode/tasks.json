@@ -1,0 +1,71 @@
+{
+  // Terminal > Run Task... runs these with mustvenv's Python, no activation needed.
+  "version": "2.0.0",
+  "options": {
+    "env": { "PYTHONUTF8": "1" }
+  },
+  "windows": {
+    "options": { "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"] } }
+  },
+  "tasks": [
+    {
+      "label": "1. Setup (create mustvenv, install, .env)",
+      "type": "shell",
+      "command": "bash setup.sh",
+      "windows": { "command": ".\\setup.ps1" },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Create PostgreSQL database (once)",
+      "type": "shell",
+      "command": "psql -U postgres -h localhost -f docs/setup.sql",
+      "windows": { "command": ".\\setup_db.ps1" },
+      "problemMatcher": []
+    },
+    {
+      "label": "3. Migrate",
+      "type": "shell",
+      "command": "./mustvenv/bin/python manage.py migrate",
+      "windows": { "command": ".\\mustvenv\\Scripts\\python.exe manage.py migrate" },
+      "problemMatcher": []
+    },
+    {
+      "label": "4. Load demo data",
+      "type": "shell",
+      "command": "./mustvenv/bin/python manage.py seed_demo",
+      "windows": { "command": ".\\mustvenv\\Scripts\\python.exe manage.py seed_demo" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run server",
+      "type": "shell",
+      "command": "./mustvenv/bin/python manage.py runserver",
+      "windows": { "command": ".\\mustvenv\\Scripts\\python.exe manage.py runserver" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "command": "./mustvenv/bin/python manage.py test --noinput",
+      "windows": { "command": ".\\mustvenv\\Scripts\\python.exe manage.py test --noinput" },
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "Database demo (terminal)",
+      "type": "shell",
+      "command": "./mustvenv/bin/python manage.py demo_db",
+      "windows": { "command": ".\\mustvenv\\Scripts\\python.exe manage.py demo_db" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Health check",
+      "type": "shell",
+      "command": "curl -s http://127.0.0.1:8000/health/db/",
+      "windows": { "command": "Invoke-RestMethod http://127.0.0.1:8000/health/db/ | ConvertTo-Json" },
+      "problemMatcher": []
+    }
+  ]
+}

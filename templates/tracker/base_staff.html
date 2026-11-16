@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block body_class %}bg-mist{% endblock %}
+
+{% block header %}
+{% url 'tracker:report' as report_url %}{% url 'tracker:events' as events_url %}{% url 'tracker:stock' as stock_url %}
+<header class="sticky top-0 z-50 bg-navy text-white shadow-[0_1px_0_rgba(255,255,255,0.06)]">
+  <div class="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-4 px-4 sm:px-6 lg:h-[72px] lg:px-8">
+    <div class="flex h-full items-center gap-8">
+      <a href="{{ report_url }}" class="flex items-center gap-2.5">
+        <span class="rounded-full bg-white px-2.5 py-1 text-[13px] font-extrabold tracking-wide text-navy">MUST</span>
+        <span class="text-[17px] font-bold tracking-tight lg:text-[19px]">HealthConnect</span>
+        <span class="rounded bg-sun px-1.5 py-0.5 text-[11px] font-bold text-ink">Staff</span>
+      </a>
+      <nav aria-label="Staff" class="hidden h-full items-stretch md:flex">
+        {% include "partials/_nav_link.html" with url=report_url label="Report" %}
+        {% include "partials/_nav_link.html" with url=events_url label="Events" %}
+        {% include "partials/_nav_link.html" with url=stock_url label="Stock" %}
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-3">
+      {# Which database connection (and PostgreSQL role) this page uses #}
+      <span class="hidden items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[13px] text-sky-100 lg:inline-flex" title="Django connection and PostgreSQL role used by this page">
+        {% include "partials/icon.html" with name="database" cls="h-3.5 w-3.5 text-sun" %}{% block connection %}default · hc_app{% endblock %}
+      </span>
+
+      {% if user.is_authenticated %}
+        <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+          <button type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="menu"
+                  class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25">
+            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-sun text-sm font-bold text-ink">{{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}</span>
+            <span class="hidden text-left leading-tight sm:block">
+              <span class="block text-sm font-semibold">{{ user.get_full_name|default:user.username }}</span>
+              <span class="block text-xs text-sky-200">{% if user.is_superuser %}Coordinator{% else %}Peer educator{% endif %}</span>
+            </span>
+            {% include "partials/icon.html" with name="chevron-down" cls="h-4 w-4 text-sky-200" %}
+          </button>
+          <div x-show="open" x-cloak x-transition.origin.top.right role="menu"
+               class="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-line bg-white py-1.5 text-ink shadow-float">
+            <p class="border-b border-line px-4 pb-2.5 pt-1.5 text-sm text-muted">Signed in as <strong class="font-semibold text-ink">{{ user.username }}</strong></p>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}" role="menuitem" class="flex items-center gap-3 px-4 py-2.5 text-[15px] transition hover:bg-mist">{% include "partials/icon.html" with name="settings" cls="h-4 w-4 text-subtle" %} Admin</a>{% endif %}
+            <a href="{% url 'portal:home' %}" role="menuitem" class="flex items-center gap-3 px-4 py-2.5 text-[15px] transition hover:bg-mist">{% include "partials/icon.html" with name="external" cls="h-4 w-4 text-subtle" %} Student site</a>
+            <a href="{% url 'health_db' %}" role="menuitem" class="flex items-center gap-3 px-4 py-2.5 text-[15px] transition hover:bg-mist">{% include "partials/icon.html" with name="activity" cls="h-4 w-4 text-subtle" %} Database health check</a>
+            <form method="post" action="{% url 'logout' %}" class="border-t border-line pt-1.5">{% csrf_token %}
+              <button role="menuitem" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[15px] text-bad transition hover:bg-bad-50">{% include "partials/icon.html" with name="logout" cls="h-4 w-4" %} Sign out</button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Mobile tabs #}
+  <nav aria-label="Staff" class="grid grid-cols-3 bg-brand md:hidden">
+    <a href="{{ report_url }}" class="border-b-[3px] py-3 text-center text-[15px] {% if request.path == report_url %}border-sun font-bold text-white{% else %}border-transparent text-sky-100{% endif %}">Report</a>
+    <a href="{{ events_url }}" class="border-b-[3px] py-3 text-center text-[15px] {% if request.path == events_url %}border-sun font-bold text-white{% else %}border-transparent text-sky-100{% endif %}">Events</a>
+    <a href="{{ stock_url }}" class="border-b-[3px] py-3 text-center text-[15px] {% if request.path == stock_url %}border-sun font-bold text-white{% else %}border-transparent text-sky-100{% endif %}">Stock</a>
+  </nav>
+</header>
+{% endblock %}
+
+{% block footer %}{% endblock %}

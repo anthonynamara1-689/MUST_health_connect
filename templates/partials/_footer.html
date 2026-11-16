@@ -1,0 +1,39 @@
+<footer class="bg-navy-950 text-sky-100">
+  <div class="page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-16">
+    <div class="max-w-sm">
+      <a href="{% url 'portal:home' %}" class="inline-flex items-center gap-2.5">
+        <span class="rounded-full bg-white px-2.5 py-1 text-[13px] font-extrabold tracking-wide text-navy">MUST</span>
+        <span class="text-lg font-bold text-white">HealthConnect</span>
+      </a>
+      <p class="mt-4 text-[15px] leading-relaxed text-sky-200">Free, confidential HIV support for students at Mbarara University of Science and Technology.</p>
+      <p class="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm text-sky-100">
+        {% include "partials/icon.html" with name="eye-off" cls="h-4 w-4 text-sun" %} Nothing you search on this site is saved.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-sm font-semibold text-white">Need help today?</h2>
+      <ul class="mt-4 space-y-3 text-[15px]">
+        <li class="flex gap-2.5">{% include "partials/icon.html" with name="pin" cls="mt-0.5 h-4 w-4 text-sun" %}<span>MUST Health Services, Kihumuro campus</span></li>
+        <li class="flex gap-2.5">{% include "partials/icon.html" with name="pin" cls="mt-0.5 h-4 w-4 text-sun" %}<span>HIV clinic, Mbarara Regional Referral Hospital</span></li>
+        <li class="flex gap-2.5">{% include "partials/icon.html" with name="clock" cls="mt-0.5 h-4 w-4 text-sun" %}<span>Possible exposure? PEP works best within 72 hours.</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="text-sm font-semibold text-white">Explore</h2>
+      <ul class="mt-4 space-y-2.5 text-[15px]">
+        <li><a href="{% url 'portal:directory' %}" class="transition hover:text-white">Find support</a></li>
+        <li><a href="{% url 'portal:topics' %}" class="transition hover:text-white">Topics</a></li>
+        <li><a href="{% url 'portal:events' %}" class="transition hover:text-white">Events</a></li>
+        <li><a href="{% url 'portal:feedback' %}" class="transition hover:text-white">Ask anonymously</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-white/10">
+    <div class="page flex flex-col gap-2 py-5 text-sm text-sky-200 sm:flex-row sm:items-center sm:justify-between">
+      <p>A student project supporting the MUST HIV/AIDS Policy (2019).</p>
+      <a href="{% url 'tracker:report' %}" class="transition hover:text-white">Staff sign in</a>
+    </div>
+  </div>
+</footer>

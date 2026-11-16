@@ -1,0 +1,11 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/mustvenv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "files.associations": { "**/templates/**/*.html": "django-html" },
+  "emmet.includeLanguages": { "django-html": "html" },
+  "[django-html]": { "editor.tabSize": 2 },
+  "files.exclude": {
+    "**/__pycache__": true
+  },
+  "python.terminal.useEnvFile": true
+}

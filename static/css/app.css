@@ -1,0 +1,85 @@
+/* Fonts are served from static/fonts so the site looks right with no internet. */
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/public-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("../fonts/public-sans-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("../fonts/public-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/public-sans-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 800; font-display: swap; src: url("../fonts/public-sans-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("../fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2"); }
+
+/* Alpine.js: hide elements until Alpine has started, so nothing flashes on load. */
+[x-cloak] { display: none !important; }
+
+html { scroll-behavior: smooth; }
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Numbers in tables and counters line up digit for digit. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* The SQL console replays the transaction one line at a time (stock page). */
+@keyframes sql-line {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.sql-line { animation: sql-line 0.32s ease-out both; }
+
+/* COMMIT / ROLLBACK stamp lands after the last line. */
+@keyframes stamp {
+  0% { opacity: 0; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.stamp { animation: stamp 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+/* Progress bars fill once when the report loads. */
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bar-fill { transform-origin: left; animation: grow 0.7s cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* ---------- Home page photo slider ----------
+   Plain CSS (not Tailwind classes), so changing it never needs a CSS rebuild. */
+.hero-slider { position: relative; overflow: hidden; background: #0A2F57; }
+.hero-track { display: flex; height: 100%; transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+.hero-slide { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+
+.hero-arrow {
+  position: absolute; top: 50%; z-index: 2; display: flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem; margin-top: -1.25rem; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.92); color: #0E3F73; box-shadow: 0 4px 14px rgba(7, 31, 59, 0.25);
+  transition: opacity 0.2s, transform 0.2s, background 0.2s;
+}
+.hero-arrow:hover { background: #fff; transform: scale(1.06); }
+.hero-arrow:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(255, 181, 71, 0.6); }
+.hero-arrow-left { left: 0.75rem; }
+.hero-arrow-right { right: 0.75rem; }
+/* With a mouse, the arrows appear when you point at the photo. On phones they always show. */
+@media (hover: hover) {
+  .hero-arrow { opacity: 0; }
+  [aria-roledescription="carousel"]:hover .hero-arrow,
+  .hero-arrow:focus-visible { opacity: 1; }
+}
+
+.hero-dots {
+  position: absolute; right: 1rem; bottom: 1rem; z-index: 2; display: none; gap: 0.375rem;
+  padding: 0.5rem 0.625rem; border-radius: 9999px; background: rgba(7, 31, 59, 0.45); backdrop-filter: blur(4px);
+}
+@media (min-width: 640px) { .hero-dots { display: flex; } }
+.hero-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.55); transition: width 0.3s, background 0.3s; }
+.hero-dot:hover { background: #fff; }
+.hero-dot.is-active { width: 1.375rem; background: #FFB547; }
+.hero-dot:focus-visible { outline: 2px solid #FFB547; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+@media print {
+  header, nav, footer, form, button, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .panel, .tile { box-shadow: none !important; }
+}

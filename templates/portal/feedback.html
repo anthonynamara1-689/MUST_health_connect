@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Ask anonymously · MUST HealthConnect{% endblock %}
+
+{% block content %}
+{% include "partials/_page_band.html" with title="Ask anything. We won’t know it’s you." lead="Peer educators read every message and answer common questions at talks and in campus newsletters." %}
+
+<div class="page grid gap-8 py-10 lg:grid-cols-[1fr_22rem] lg:gap-12 lg:py-14">
+  {% if sent %}
+    <section class="panel flex flex-col items-start p-8 lg:p-10" aria-live="polite">
+      <span class="stamp flex h-14 w-14 items-center justify-center rounded-full bg-ok-50 text-ok">{% include "partials/icon.html" with name="check" cls="h-7 w-7" stroke="2.5" %}</span>
+      <h2 class="mt-5 text-2xl font-bold tracking-tight text-navy lg:text-3xl">Sent. Thank you.</h2>
+      <p class="mt-2 max-w-lg text-lg leading-relaxed text-muted">Your message is in, with no name attached. Look out for the answer at the next peer talk or in the campus newsletter.</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="{% url 'portal:feedback' %}" class="btn-primary px-6">Ask another question</a>
+        <a href="{% url 'portal:directory' %}" class="btn-secondary">Find support near campus</a>
+      </div>
+    </section>
+  {% else %}
+    <form method="post" novalidate x-data="{ busy: false, len: {{ form.message.value|default:''|length }}, rating: '{{ form.rating.value|default:'' }}' }" @submit="busy = true" class="space-y-8">
+
+      <fieldset>
+        <legend class="field-label">What is it about?</legend>
+        <div class="mt-1 grid gap-3 sm:grid-cols-2">
+          {% for value, label in form.fields.category.choices %}
+            <label class="group relative cursor-pointer">
+              <input type="radio" name="category" value="{{ value }}" class="peer sr-only" {% if form.category.value == value %}checked{% endif %}>
+              <span class="flex h-full items-center gap-3 rounded-xl border border-line bg-white p-4 transition hover:border-sky-200 hover:bg-sky-50/50 peer-checked:border-brand peer-checked:bg-sky-50 peer-checked:shadow-[inset_0_0_0_1px_#14508C] peer-focus-visible:ring-4 peer-focus-visible:ring-brand/20">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-mist text-brand transition group-has-[:checked]:bg-brand group-has-[:checked]:text-white">
+                  {% for key, icon in category_icons.items %}{% if key == value %}{% include "partials/icon.html" with name=icon %}{% endif %}{% endfor %}
+                </span>
+                <span class="text-[15px] font-semibold leading-snug">{{ label }}</span>
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div>
+        <div class="flex items-baseline justify-between">
+          <label for="message" class="field-label">Your message</label>
+          <span class="tabular text-sm" :class="len > 1900 ? 'font-semibold text-warn' : 'text-subtle'"><span x-text="len">0</span> / 2000</span>
+        </div>
+        <textarea id="message" name="message" rows="7" maxlength="2000" @input="len = $el.value.length"
+                  placeholder="Write as much or as little as you like."
+                  class="textarea {% if form.message.errors %}border-bad focus:border-bad focus:ring-bad/15{% endif %}"
+                  {% if form.message.errors %}aria-invalid="true" aria-describedby="message-error"{% endif %}>{{ form.message.value|default:'' }}</textarea>
+        {% if form.message.errors %}<p id="message-error" class="mt-2 flex items-center gap-1.5 text-sm font-semibold text-bad">{% include "partials/icon.html" with name="alert" cls="h-4 w-4" %}{{ form.message.errors.0 }}</p>{% endif %}
+      </div>
+
+      <fieldset>
+        <div class="flex items-baseline justify-between gap-3">
+          <legend class="field-label">How helpful is campus HIV information? <span class="font-normal text-subtle">(optional)</span></legend>
+          <button type="button" x-show="rating" x-cloak @click="rating = ''" class="text-sm font-semibold text-link hover:underline">Clear</button>
+        </div>
+        <div class="mt-1 flex max-w-sm gap-2">
+          {% for value, label in form.fields.rating.choices %}
+            <label class="flex-1 cursor-pointer">
+              <input type="radio" name="rating" value="{{ value }}" x-model="rating" class="peer sr-only">
+              <span class="flex h-12 items-center justify-center rounded-lg border border-[#B7C3D1] bg-white text-lg font-bold text-navy transition hover:border-brand hover:bg-sky-50 peer-checked:border-navy peer-checked:bg-navy peer-checked:text-white peer-focus-visible:ring-4 peer-focus-visible:ring-brand/20">{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <div class="mt-1.5 flex max-w-sm justify-between text-sm text-subtle"><span>Not at all</span><span>Very</span></div>
+      </fieldset>
+
+      <div class="flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:gap-5">
+        <button class="btn-primary px-7" :disabled="busy">
+          <span x-show="!busy" class="inline-flex items-center gap-2">{% include "partials/icon.html" with name="send" cls="h-[18px] w-[18px]" %} Send anonymously</span>
+          <span x-show="busy" x-cloak>Sending…</span>
+        </button>
+        <p class="flex items-center gap-2 text-sm text-muted">{% include "partials/icon.html" with name="lock" cls="h-4 w-4" %} Sent without your name, login or IP address.</p>
+      </div>
+      {% csrf_token %}
+    </form>
+  {% endif %}
+
+  <aside class="h-fit rounded-2xl bg-mist p-6 lg:sticky lg:top-24 lg:p-7">
+    <h2 class="text-xl font-bold text-navy">What we keep</h2>
+    <ul class="mt-4 space-y-2.5">
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="check-circle" cls="h-[18px] w-[18px] text-ok" %} Topic</li>
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="check-circle" cls="h-[18px] w-[18px] text-ok" %} Message</li>
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="check-circle" cls="h-[18px] w-[18px] text-ok" %} Rating, if you give one</li>
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="check-circle" cls="h-[18px] w-[18px] text-ok" %} Date (no time of day)</li>
+    </ul>
+    <h3 class="mt-6 text-sm font-semibold text-subtle">Never stored</h3>
+    <ul class="mt-2.5 space-y-2.5 text-muted">
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="x-circle" cls="h-[18px] w-[18px] text-subtle" %} Your name or student number</li>
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="x-circle" cls="h-[18px] w-[18px] text-subtle" %} Your login</li>
+      <li class="flex items-center gap-2.5">{% include "partials/icon.html" with name="x-circle" cls="h-[18px] w-[18px] text-subtle" %} Your IP address</li>
+    </ul>
+    <p class="mt-5 border-t border-line pt-4 text-[15px] leading-relaxed">The database has no place for these, so they can’t be stored.</p>
+    <p class="mt-3 text-sm text-subtle">MUST HIV/AIDS Policy, clause 5.4. Uganda Data Protection and Privacy Act 2019.</p>
+  </aside>
+</div>
+{% endblock %}

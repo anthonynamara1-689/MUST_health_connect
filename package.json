@@ -1,0 +1,12 @@
+{
+  "name": "must-healthconnect",
+  "private": true,
+  "description": "Only used to rebuild static/css/tailwind.css. The Django app does not need Node to run. Alpine.js is already copied into static/js.",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i tailwind/input.css -o static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i tailwind/input.css -o static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

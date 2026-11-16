@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Find support · MUST HealthConnect{% endblock %}
+
+{% block content %}
+<div x-data="directory({{ open_id|default:'null' }})" x-effect="document.body.classList.toggle('overflow-hidden', open !== null)" @keydown.escape.window="open = null">
+
+{# ---------- Search band ---------- #}
+<section class="bg-brand text-white">
+  <div class="page py-10 lg:py-12">
+    <a href="{% url 'portal:home' %}" class="inline-flex items-center gap-1 text-sm text-sky-100 transition hover:text-white">{% include "partials/icon.html" with name="chevron-left" cls="h-4 w-4" %} Home</a>
+    <h1 class="mt-3 text-[34px] font-extrabold tracking-[-0.02em] lg:text-5xl">Support near campus</h1>
+    <form method="get" role="search" class="mt-6 grid max-w-4xl gap-2 rounded-2xl bg-white p-2 shadow-float sm:grid-cols-[1fr_auto] lg:grid-cols-[1.5fr_1fr_auto]">
+      {% if selected_tag %}<input type="hidden" name="tag" value="{{ selected_tag }}">{% endif %}
+      <label class="relative block sm:col-span-2 lg:col-span-1">
+        <span class="sr-only">Search services</span>
+        <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle">{% include "partials/icon.html" with name="search" %}</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="Search services" class="input border-transparent bg-mist pl-11 focus:bg-white">
+      </label>
+      <label class="block">
+        <span class="sr-only">Campus</span>
+        <select name="campus" class="select border-transparent bg-mist focus:bg-white">
+          <option value="">Anywhere in Mbarara</option>
+          {% for value, label in campus_choices %}<option value="{{ value }}" {% if value == campus %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="btn-primary px-6">Search</button>
+    </form>
+  </div>
+</section>
+
+{# ---------- Mobile: need chips ---------- #}
+<nav aria-label="Filter by need" class="border-b border-line lg:hidden">
+  <div class="page flex gap-2 overflow-x-auto py-3 [scrollbar-width:none]">
+    <a href="{% querystring tag=None open=None %}" class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition {% if not selected_tag %}border-navy bg-navy text-white{% else %}border-line text-navy hover:border-brand{% endif %}">All</a>
+    {% for t in tags %}
+      <a href="{% querystring tag=t.slug open=None %}" class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition {% if selected_tag == t.slug %}border-navy bg-navy text-white{% else %}border-line text-navy hover:border-brand{% endif %}">{{ t.name }}</a>
+    {% endfor %}
+  </div>
+</nav>
+
+<div class="page grid gap-8 py-8 lg:grid-cols-[17rem_1fr] lg:gap-10 lg:py-12">
+  {# ---------- Sidebar filters (desktop) ---------- #}
+  <aside class="hidden space-y-6 lg:block">
+    <nav aria-label="Filter by need">
+      <h2 class="px-3 text-sm font-semibold text-subtle">Filter by need</h2>
+      <ul class="mt-2 space-y-0.5">
+        <li><a href="{% querystring tag=None open=None %}" class="flex items-center justify-between rounded-lg border-l-[3px] px-3 py-2.5 transition {% if not selected_tag %}border-brand bg-sky-50 font-bold text-navy{% else %}border-transparent text-link hover:bg-mist{% endif %}">All services <span class="tabular text-sm font-semibold text-subtle">{{ all_count }}</span></a></li>
+        {% for t in tags %}
+          <li><a href="{% querystring tag=t.slug open=None %}" class="flex items-center justify-between rounded-lg border-l-[3px] px-3 py-2.5 transition {% if selected_tag == t.slug %}border-brand bg-sky-50 font-bold text-navy{% else %}border-transparent text-link hover:bg-mist{% endif %}">{{ t.name }} <span class="tabular text-sm font-semibold text-subtle">{{ t.total }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div>
+      <h2 class="px-3 text-sm font-semibold text-subtle">Campus</h2>
+      <div class="mt-2 flex flex-wrap gap-1.5 px-1">
+        <a href="{% querystring campus=None open=None %}" class="rounded-full px-3 py-1.5 text-sm font-semibold transition {% if not campus %}bg-navy text-white{% else %}bg-mist text-navy hover:bg-sky-100{% endif %}">Any</a>
+        {% for value, label in campus_choices %}
+          <a href="{% querystring campus=value open=None %}" class="rounded-full px-3 py-1.5 text-sm font-semibold transition {% if campus == value %}bg-navy text-white{% else %}bg-mist text-navy hover:bg-sky-100{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-sun/40 bg-sun-50 p-4 text-[15px] leading-relaxed text-[#5C3B00]">
+      <p class="flex items-center gap-2 font-bold">{% include "partials/icon.html" with name="clock" cls="h-[18px] w-[18px]" %} Possible exposure in the last 72 hours?</p>
+      <p class="mt-1.5">PEP works best when started early. Go to the MRRH HIV clinic or MUST Health Services today.</p>
+    </div>
+  </aside>
+
+  {# ---------- Results ---------- #}
+  <section aria-label="Services">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-muted"><strong class="font-bold text-ink">{{ services|length }} service{{ services|length|pluralize }}</strong> checked by the Office of the Dean of Students</p>
+      <div class="seg hidden sm:inline-flex" role="group" aria-label="Layout">
+        <button type="button" @click="setView('grid')" :class="view === 'grid' && 'seg-on'" class="seg-btn inline-flex items-center gap-1.5" :aria-pressed="view === 'grid'">{% include "partials/icon.html" with name="grid" cls="h-4 w-4" %} Grid</button>
+        <button type="button" @click="setView('list')" :class="view === 'list' && 'seg-on'" class="seg-btn inline-flex items-center gap-1.5" :aria-pressed="view === 'list'">{% include "partials/icon.html" with name="list" cls="h-4 w-4" %} List</button>
+      </div>
+    </div>
+
+    {% if q or selected_tag or campus %}
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        {% if q %}<a href="{% querystring q=None open=None %}" class="group inline-flex items-center gap-1.5 rounded-full bg-sky-50 py-1 pl-3 pr-2 text-sm font-semibold text-navy transition hover:bg-sky-100">“{{ q }}” <span class="rounded-full p-0.5 group-hover:bg-white">{% include "partials/icon.html" with name="x" cls="h-3.5 w-3.5" %}</span><span class="sr-only">Remove search</span></a>{% endif %}
+        {% if selected_tag %}<a href="{% querystring tag=None open=None %}" class="group inline-flex items-center gap-1.5 rounded-full bg-sky-50 py-1 pl-3 pr-2 text-sm font-semibold text-navy transition hover:bg-sky-100">{{ selected_tag_name|default:selected_tag }} <span class="rounded-full p-0.5 group-hover:bg-white">{% include "partials/icon.html" with name="x" cls="h-3.5 w-3.5" %}</span><span class="sr-only">Remove filter</span></a>{% endif %}
+        {% if campus %}<a href="{% querystring campus=None open=None %}" class="group inline-flex items-center gap-1.5 rounded-full bg-sky-50 py-1 pl-3 pr-2 text-sm font-semibold text-navy transition hover:bg-sky-100">{{ campus_name }} <span class="rounded-full p-0.5 group-hover:bg-white">{% include "partials/icon.html" with name="x" cls="h-3.5 w-3.5" %}</span><span class="sr-only">Remove campus</span></a>{% endif %}
+        <a href="{% url 'portal:directory' %}" class="ml-1 text-sm font-semibold text-link hover:underline">Clear all</a>
+      </div>
+    {% endif %}
+
+    <ul class="mt-6 grid gap-4" :class="view === 'grid' ? 'sm:grid-cols-2' : 'grid-cols-1'">
+      {% for service in services %}
+        <li class="tile group relative flex flex-col p-5 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lift lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <h2 class="text-lg font-bold leading-snug tracking-tight lg:text-xl">
+              <button type="button" @click="open = {{ service.pk }}" class="text-left text-link after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20 group-hover:underline">{{ service.name }}</button>
+            </h2>
+            {% if service.verified_on %}<span class="mt-1 text-ok" title="Checked {{ service.verified_on|date:'j M Y' }}">{% include "partials/icon.html" with name="check-circle" %}<span class="sr-only">Checked</span></span>{% endif %}
+          </div>
+          <p class="mt-1 flex items-center gap-1.5 text-[15px] text-muted">{% include "partials/icon.html" with name="pin" cls="h-4 w-4" %}{{ service.location_text }}</p>
+          <p class="mt-3 leading-relaxed" :class="view === 'grid' && 'line-clamp-2'">{{ service.offers }}</p>
+          <div class="mb-5 mt-4 flex flex-wrap gap-1.5">
+            {% for tag in service.tag_list %}<span class="chip">{{ tag.name }}</span>{% endfor %}
+          </div>
+          <div class="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4 text-sm text-muted">
+            <span class="flex items-center gap-1.5">{% include "partials/icon.html" with name="clock" cls="h-4 w-4" %}{{ service.hours|default:"Hours not listed yet" }}</span>
+            <span class="inline-flex items-center gap-1 font-semibold text-link">Details {% include "partials/icon.html" with name="chevron-right" cls="h-4 w-4 transition group-hover:translate-x-0.5" %}</span>
+          </div>
+        </li>
+      {% empty %}
+        <li class="rounded-2xl border border-dashed border-sky-200 bg-mist px-6 py-14 text-center sm:col-span-2">
+          <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-brand shadow-rest">{% include "partials/icon.html" with name="search" %}</span>
+          <h2 class="mt-4 text-lg font-bold text-navy">No services match that search</h2>
+          <p class="mx-auto mt-1 max-w-sm text-muted">Try a shorter word, another campus, or show every service.</p>
+          <a href="{% url 'portal:directory' %}" class="btn-secondary mt-5">Show all services</a>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <p class="mt-8 flex items-center gap-2 text-sm text-muted">{% include "partials/icon.html" with name="eye-off" cls="h-4 w-4" %} Nothing you search on this page is saved. <a href="{% url 'portal:feedback' %}" class="u-link">Ask a question anonymously</a></p>
+  </section>
+</div>
+
+{# ---------- Service details modals ---------- #}
+{% for service in services %}
+  <div x-show="open === {{ service.pk }}" x-cloak class="fixed inset-0 z-[70] flex items-end justify-center p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="svc-{{ service.pk }}-title">
+    <div x-show="open === {{ service.pk }}" x-transition.opacity.duration.200ms @click="open = null" class="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"></div>
+    <div x-show="open === {{ service.pk }}"
+         x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="translate-y-6 opacity-0 sm:translate-y-0 sm:scale-95" x-transition:enter-end="translate-y-0 opacity-100 sm:scale-100"
+         x-transition:leave="transition duration-150 ease-in" x-transition:leave-end="translate-y-6 opacity-0 sm:translate-y-0 sm:scale-95"
+         x-effect="open === {{ service.pk }} && $nextTick(() => $el.focus())" tabindex="-1"
+         class="relative max-h-[90vh] focus:outline-none w-full overflow-y-auto rounded-t-3xl bg-white shadow-float sm:max-w-xl sm:rounded-2xl">
+      <div class="flex items-start justify-between gap-4 border-b border-line p-6">
+        <div>
+          <h2 id="svc-{{ service.pk }}-title" class="text-2xl font-bold tracking-tight text-navy">{{ service.name }}</h2>
+          <p class="mt-1 flex items-center gap-1.5 text-muted">{% include "partials/icon.html" with name="pin" cls="h-4 w-4" %}{{ service.location_text }}{% if service.get_campus_display != service.location_text %}<span class="text-sky-200">/</span>{{ service.get_campus_display }}{% endif %}</p>
+        </div>
+        <button type="button" @click="open = null" class="rounded-lg p-2 text-subtle transition hover:bg-mist hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20" aria-label="Close">{% include "partials/icon.html" with name="x" %}</button>
+      </div>
+      <div class="space-y-5 p-6">
+        <p class="text-lg leading-relaxed">{{ service.offers }}</p>
+        <div class="flex flex-wrap gap-1.5">{% for tag in service.tag_list %}<a href="{% url 'portal:directory' %}?tag={{ tag.slug }}" class="chip transition hover:bg-sky-100">{{ tag.name }}</a>{% endfor %}</div>
+        <dl class="grid gap-3 rounded-xl bg-mist p-4 sm:grid-cols-2">
+          <div class="flex gap-3"><dt class="text-brand">{% include "partials/icon.html" with name="clock" %}<span class="sr-only">Hours</span></dt><dd>{{ service.hours|default:"Hours not listed yet" }}</dd></div>
+          <div class="flex gap-3"><dt class="text-brand">{% include "partials/icon.html" with name="phone" %}<span class="sr-only">Phone</span></dt><dd>{% if service.phone %}<a href="tel:{{ service.phone }}" class="font-semibold text-link hover:underline">{{ service.phone }}</a>{% else %}Ask at the desk{% endif %}</dd></div>
+          {% if service.provider %}<div class="flex gap-3 sm:col-span-2"><dt class="text-brand">{% include "partials/icon.html" with name="users" %}<span class="sr-only">Run by</span></dt><dd>Run by {{ service.provider }}</dd></div>{% endif %}
+        </dl>
+        {% if service.verified_on %}
+          <p class="flex items-center gap-2 text-sm text-ok">{% include "partials/icon.html" with name="check-circle" cls="h-4 w-4" %} Checked by the Office of the Dean of Students on {{ service.verified_on|date:"j F Y" }}</p>
+        {% endif %}
+      </div>
+      <div class="flex flex-col-reverse gap-2 border-t border-line bg-mist/60 p-4 sm:flex-row sm:justify-end">
+        <a href="{% url 'portal:feedback' %}?category=service" class="btn-secondary">{% include "partials/icon.html" with name="message" cls="h-4 w-4" %} Tell us about this service</a>
+        {% if service.phone %}<a href="tel:{{ service.phone }}" class="btn-primary">{% include "partials/icon.html" with name="phone" cls="h-4 w-4" %} Call</a>{% else %}<button type="button" @click="open = null" class="btn-primary">Done</button>{% endif %}
+      </div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+<script>
+  // Page state for Alpine: which service's details are open, and grid or list layout.
+  function directory(openId) {
+    let saved = null;
+    try { saved = localStorage.getItem("hc-directory-view"); } catch (e) {}
+    return {
+      open: openId,
+      view: saved === "list" ? "list" : "grid",
+      setView(v) {
+        this.view = v;
+        try { localStorage.setItem("hc-directory-view", v); } catch (e) {}
+      },
+    };
+  }
+</script>
+{% endblock %}

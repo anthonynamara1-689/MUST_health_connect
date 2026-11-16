@@ -1,0 +1,20 @@
+{% comment %} Django messages shown as toasts in the top-right corner. They close by themselves after 7 seconds. {% endcomment %}
+{% if messages %}
+  <div class="pointer-events-none fixed inset-x-4 top-20 z-[60] flex flex-col items-end gap-3 sm:left-auto sm:right-6 sm:w-[26rem]" aria-live="polite">
+    {% for message in messages %}
+      <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 7000)" x-show="show"
+           x-transition:enter="transition duration-300 ease-out" x-transition:enter-start="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
+           x-transition:leave="transition duration-200 ease-in" x-transition:leave-end="opacity-0"
+           role="status"
+           class="pointer-events-auto flex w-full items-start gap-3 rounded-xl border bg-white p-4 shadow-float {% if message.tags == 'error' %}border-bad/30{% else %}border-ok/30{% endif %}">
+        <span class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full {% if message.tags == 'error' %}bg-bad-50 text-bad{% else %}bg-ok-50 text-ok{% endif %}">
+          {% if message.tags == 'error' %}{% include "partials/icon.html" with name="alert" cls="h-4 w-4" %}{% else %}{% include "partials/icon.html" with name="check" cls="h-4 w-4" %}{% endif %}
+        </span>
+        <p class="flex-1 pt-1 text-[15px] leading-snug text-ink">{{ message }}</p>
+        <button type="button" @click="show = false" class="rounded-md p-1 text-subtle transition hover:bg-mist hover:text-ink" aria-label="Dismiss">
+          {% include "partials/icon.html" with name="x" cls="h-4 w-4" %}
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

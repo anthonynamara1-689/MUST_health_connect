@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Temporarily unavailable · MUST HealthConnect{% endblock %}
+{% block body_class %}bg-mist{% endblock %}
+
+{% block content %}
+<div class="page flex justify-center py-16 lg:py-24">
+  <div class="panel w-full max-w-xl p-8 text-center sm:p-12">
+    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-sun-50 text-warn">{% include "partials/icon.html" with name="database" cls="h-8 w-8" %}</span>
+    <h1 class="mt-6 text-[28px] font-bold tracking-tight text-navy">We can’t reach our database right now</h1>
+    <p class="mt-3 text-lg text-muted">Nothing you entered was changed. Try again in a minute.</p>
+    <a href="" class="btn-primary mt-8 px-7">{% include "partials/icon.html" with name="refresh" cls="h-[18px] w-[18px]" %} Try again</a>
+    <div class="mt-10 rounded-xl bg-mist p-5 text-left">
+      <p class="font-semibold text-navy">Need help today?</p>
+      <ul class="mt-2 space-y-1.5 text-[15px] text-muted">
+        <li class="flex gap-2">{% include "partials/icon.html" with name="pin" cls="mt-0.5 h-4 w-4 text-brand" %} MUST Health Services, Kihumuro campus</li>
+        <li class="flex gap-2">{% include "partials/icon.html" with name="pin" cls="mt-0.5 h-4 w-4 text-brand" %} HIV clinic, Mbarara Regional Referral Hospital</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}MUST HealthConnect · Free, confidential HIV support{% endblock %}
+
+{% block content %}
+{# ---------- Hero: search first ---------- #}
+<section class="relative overflow-hidden bg-brand text-white">
+  <div class="page grid items-center gap-10 py-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-20">
+    <div>
+      <h1 class="max-w-xl text-balance text-[40px] font-extrabold leading-[1.05] tracking-[-0.025em] sm:text-5xl lg:text-[60px]">What do you need help with?</h1>
+      <p class="mt-4 text-lg text-sky-100 lg:text-[22px]">Free, confidential HIV support at MUST</p>
+
+      <form method="get" action="{% url 'portal:directory' %}" role="search"
+            class="mt-8 grid max-w-xl gap-2 rounded-2xl bg-white p-2 shadow-float sm:grid-cols-[1fr_auto]">
+        <label class="relative block sm:col-span-2">
+          <span class="sr-only">What are you looking for?</span>
+          <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle">{% include "partials/icon.html" with name="search" cls="h-5 w-5" %}</span>
+          <input type="search" name="q" placeholder="Testing, PrEP, counselling…" class="input border-transparent bg-mist pl-11 focus:bg-white">
+        </label>
+        <label class="block">
+          <span class="sr-only">Where</span>
+          <select name="campus" class="select border-transparent bg-mist focus:bg-white">
+            <option value="">Anywhere in Mbarara</option>
+            {% for value, label in campus_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <button class="btn-primary px-6">Search {% include "partials/icon.html" with name="search" cls="h-[18px] w-[18px]" %}</button>
+      </form>
+
+      <ul class="mt-6 space-y-2.5 text-[15px] text-sky-100">
+        <li class="flex items-start gap-2.5">
+          <span class="mt-0.5 text-sun">{% include "partials/icon.html" with name="clock" cls="h-[18px] w-[18px]" %}</span>
+          <span>Possible exposure in the last 72 hours? <a href="{% url 'portal:directory' %}?tag=prep" class="font-semibold text-white underline decoration-sun decoration-2 underline-offset-4 hover:decoration-white">Get PEP today</a></span>
+        </li>
+        <li class="flex items-start gap-2.5">
+          <span class="mt-0.5 text-sun">{% include "partials/icon.html" with name="lock" cls="h-[18px] w-[18px]" %}</span>
+          <span>Rather ask privately? <a href="{% url 'portal:feedback' %}" class="font-semibold text-white underline decoration-sun decoration-2 underline-offset-4 hover:decoration-white">Ask anonymously</a></span>
+        </li>
+      </ul>
+    </div>
+
+    {# ---------- Photo slider: photos come from static/img/hero/ (see hero_slides() in portal/views.py) ---------- #}
+    <div class="relative" x-data="heroSlider({{ hero_slides|length }})"
+         @mouseenter="pause()" @mouseleave="play()" @focusin="pause()" @focusout="play()"
+         @touchstart.passive="touchStart($event)" @touchend="touchEnd($event)"
+         role="region" aria-roledescription="carousel" aria-label="Photos from campus">
+      <div class="hero-slider aspect-[4/3] w-full rounded-3xl shadow-float ring-1 ring-white/10 lg:aspect-[5/4]">
+        <div class="hero-track" :style="`transform: translateX(-${index * 100}%)`">
+          {% for slide in hero_slides %}
+            <img src="{% static slide.src %}" alt="{{ slide.alt }}" width="1200" height="900" class="hero-slide"
+                 {% if not forloop.first %}loading="lazy"{% endif %}
+                 aria-roledescription="slide" :aria-hidden="index !== {{ forloop.counter0 }}">
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if hero_slides|length > 1 %}
+        <button type="button" @click="prev()" class="hero-arrow hero-arrow-left" aria-label="Previous photo">{% include "partials/icon.html" with name="chevron-left" cls="h-5 w-5" %}</button>
+        <button type="button" @click="next()" class="hero-arrow hero-arrow-right" aria-label="Next photo">{% include "partials/icon.html" with name="chevron-right" cls="h-5 w-5" %}</button>
+        <div class="hero-dots">
+          {% for slide in hero_slides %}
+            <button type="button" @click="go({{ forloop.counter0 }})" class="hero-dot" :class="index === {{ forloop.counter0 }} && 'is-active'"
+                    :aria-current="index === {{ forloop.counter0 }}" aria-label="Show photo {{ forloop.counter }} of {{ hero_slides|length }}"></button>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <p class="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-sm font-semibold text-navy shadow-rest backdrop-blur">
+        {% include "partials/icon.html" with name="check-circle" cls="h-4 w-4 text-ok" %} {{ service_count }} services checked by the Dean of Students
+      </p>
+      {% if next_event %}
+        <a href="{% url 'portal:events' %}" class="group absolute -bottom-6 left-4 right-4 flex items-center gap-4 rounded-2xl bg-white p-4 text-ink shadow-float transition hover:-translate-y-0.5 sm:left-6 sm:right-auto sm:max-w-sm">
+          <span class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-sun-50 text-warn">
+            <span class="text-xs font-bold">{{ next_event.event_date|date:"M" }}</span>
+            <span class="text-xl font-extrabold leading-none">{{ next_event.event_date|date:"j" }}</span>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-sm text-muted">Next on campus{% if days_to_event is not None %}, in {{ days_to_event }} day{{ days_to_event|pluralize }}{% endif %}</span>
+            <span class="block truncate font-bold text-navy group-hover:text-link">{{ next_event.title }}</span>
+          </span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{# ---------- Topics ---------- #}
+<section class="page pb-16 pt-16 lg:pt-24">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h2 class="text-[28px] font-bold tracking-tight text-navy lg:text-4xl">Browse by topic</h2>
+      <p class="mt-2 text-lg text-muted">Services near campus, plus plain answers to common questions</p>
+    </div>
+    <a href="{% url 'portal:directory' %}" class="btn-secondary">View all services {% include "partials/icon.html" with name="arrow-right" cls="h-4 w-4" %}</a>
+  </div>
+  <div class="mt-8">{% include "partials/_topic_grid.html" %}</div>
+</section>
+
+{# ---------- Popular + coming up ---------- #}
+<section class="page grid gap-6 pb-20 lg:grid-cols-[1.25fr_1fr] lg:gap-10">
+  <div class="min-w-0">
+    <h2 class="text-[26px] font-bold tracking-tight text-navy lg:text-3xl">Popular right now</h2>
+    <p class="mt-1 text-muted">What other students are looking for</p>
+    <ul class="panel mt-5 divide-y divide-line overflow-hidden">
+      {% for service in popular %}
+        <li>
+          <a href="{% url 'portal:directory' %}?open={{ service.pk }}" class="group flex items-center gap-4 px-5 py-4 transition hover:bg-sky-50">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-50 text-lg font-bold text-brand transition group-hover:bg-white">{{ service.name|first }}</span>
+            <span class="min-w-0 flex-1">
+              <span class="block font-bold text-link">{{ service.name }}</span>
+              <span class="mt-0.5 flex items-center gap-1.5 text-sm text-muted">{% include "partials/icon.html" with name="pin" cls="h-3.5 w-3.5" %}<span class="truncate">{{ service.location_text }}</span></span>
+            </span>
+            <span class="text-subtle transition group-hover:translate-x-0.5 group-hover:text-brand">{% include "partials/icon.html" with name="chevron-right" %}</span>
+          </a>
+        </li>
+      {% empty %}
+        <li class="px-5 py-6 text-muted">No featured services yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <aside class="flex flex-col rounded-2xl bg-mist p-6 lg:mt-[4.5rem] lg:p-8">
+    {% if next_event %}
+      <p class="text-sm font-semibold text-bad">Coming up</p>
+      <div class="mt-3 flex gap-4">
+        <span class="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-white text-navy shadow-rest">
+          <span class="text-xs font-bold text-bad">{{ next_event.event_date|date:"M" }}</span>
+          <span class="text-2xl font-extrabold leading-none">{{ next_event.event_date|date:"j" }}</span>
+        </span>
+        <div>
+          <h3 class="text-xl font-bold leading-tight text-navy lg:text-2xl">{{ next_event.title }}</h3>
+          <p class="mt-1 text-muted">{{ next_event.event_date|date:"l j F Y" }}</p>
+          <p class="mt-0.5 flex items-center gap-1.5 text-muted">{% include "partials/icon.html" with name="pin" cls="h-4 w-4" %}{{ next_event.location.name }}</p>
+        </div>
+      </div>
+      {% if next_event.description %}<p class="mt-4 leading-relaxed">{{ next_event.description }}</p>{% endif %}
+      <a href="{% url 'portal:events' %}" class="u-link mt-6 inline-flex items-center gap-1.5 self-start">See all events {% include "partials/icon.html" with name="chevron-right" cls="h-4 w-4" %}</a>
+    {% else %}
+      <p class="text-sm font-semibold text-muted">Coming up</p>
+      <p class="mt-3 text-lg">No events are planned right now. Peer educators add talks and testing days during the semester.</p>
+      <a href="{% url 'portal:feedback' %}?category=idea" class="u-link mt-6 self-start">Suggest a talk</a>
+    {% endif %}
+  </aside>
+</section>
+
+{# ---------- Rights ---------- #}
+<section class="border-t border-line bg-mist">
+  <div class="page py-16">
+    <h2 class="text-[26px] font-bold tracking-tight text-navy lg:text-3xl">Your rights at MUST</h2>
+    <p class="mt-1 text-muted">From the MUST HIV/AIDS Policy (2019)</p>
+    <div class="mt-8 grid gap-4 md:grid-cols-3">
+      {% for right in rights %}
+        <div class="rounded-xl border-l-4 border-sun bg-white p-6 shadow-rest">
+          <p class="text-sm font-semibold text-subtle">{{ right.clause }}</p>
+          <h3 class="mt-1 text-lg font-bold text-navy">{{ right.title }}</h3>
+          <p class="mt-2 leading-relaxed text-muted">{{ right.text }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<script>
+  // Home page photo slider. Moves to the next photo every 5 seconds, loops back to the first,
+  // pauses while the mouse or keyboard focus is on it, and can be swiped on phones.
+  function heroSlider(count) {
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return {
+      index: 0,
+      timer: null,
+      startX: 0,
+      init() { this.play(); },
+      go(i) { this.index = (i + count) % count; },
+      next() { this.go(this.index + 1); },
+      prev() { this.go(this.index - 1); },
+      play() {
+        if (count < 2 || still) return;
+        this.pause();
+        this.timer = setInterval(() => { if (!document.hidden) this.next(); }, 5000);
+      },
+      pause() { clearInterval(this.timer); },
+      touchStart(e) { this.startX = e.changedTouches[0].clientX; this.pause(); },
+      touchEnd(e) {
+        const moved = e.changedTouches[0].clientX - this.startX;
+        if (Math.abs(moved) > 40) { moved < 0 ? this.next() : this.prev(); }
+        this.play();
+      },
+    };
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% url 'portal:home' as home_url %}{% url 'portal:topics' as topics_url %}{% url 'portal:directory' as directory_url %}{% url 'portal:events' as events_url %}{% url 'portal:feedback' as feedback_url %}
+<header x-data="{ open: false, scrolled: false }" @scroll.window="scrolled = window.scrollY > 8" @keydown.escape.window="open = false"
+        class="sticky top-0 z-50 bg-navy text-white transition-shadow duration-200" :class="scrolled && 'shadow-float'">
+  <div class="page flex h-16 items-center justify-between gap-4 lg:h-[72px]">
+    <a href="{{ home_url }}" class="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30">
+      <span class="rounded-full bg-white px-2.5 py-1 text-[13px] font-extrabold tracking-wide text-navy">MUST</span>
+      <span class="text-[17px] font-bold tracking-tight lg:text-[19px]">HealthConnect</span>
+    </a>
+
+    <nav aria-label="Main" class="hidden h-full items-stretch lg:flex">
+      {% include "partials/_nav_link.html" with url=directory_url label="Find support" %}
+      {% include "partials/_nav_link.html" with url=topics_url label="Topics" %}
+      {% include "partials/_nav_link.html" with url=events_url label="Events" %}
+      {% include "partials/_nav_link.html" with url=feedback_url label="Ask anonymously" %}
+      <span class="mx-3 my-5 w-px bg-white/20" aria-hidden="true"></span>
+      <a href="{% url 'tracker:report' %}" class="my-auto inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sky-100 transition hover:bg-white/10 hover:text-white">
+        {% include "partials/icon.html" with name="lock" cls="h-4 w-4" %} Staff sign in
+      </a>
+    </nav>
+
+    <div class="flex items-center gap-1 lg:hidden">
+      <a href="{{ directory_url }}" class="flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-white/10" aria-label="Search services">
+        {% include "partials/icon.html" with name="search" cls="h-5 w-5" %}
+      </a>
+      <button type="button" @click="open = !open" :aria-expanded="open" aria-controls="mobile-menu"
+              class="flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-white/10" aria-label="Menu">
+        <span x-show="!open">{% include "partials/icon.html" with name="menu" cls="h-6 w-6" %}</span>
+        <span x-show="open" x-cloak>{% include "partials/icon.html" with name="x" cls="h-6 w-6" %}</span>
+      </button>
+    </div>
+  </div>
+
+  {# Mobile menu: slides down under the bar #}
+  <div id="mobile-menu" x-show="open" x-cloak x-collapse class="border-t border-white/10 bg-navy lg:hidden">
+    <nav aria-label="Main" class="page flex flex-col gap-1 py-3">
+      <a href="{{ directory_url }}" class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium transition hover:bg-white/10 {% if request.path == directory_url %}bg-white/10{% endif %}">{% include "partials/icon.html" with name="search" cls="h-5 w-5 text-sun" %} Find support</a>
+      <a href="{{ topics_url }}" class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium transition hover:bg-white/10 {% if request.path == topics_url %}bg-white/10{% endif %}">{% include "partials/icon.html" with name="grid" cls="h-5 w-5 text-sun" %} Topics</a>
+      <a href="{{ events_url }}" class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium transition hover:bg-white/10 {% if request.path == events_url %}bg-white/10{% endif %}">{% include "partials/icon.html" with name="calendar" cls="h-5 w-5 text-sun" %} Events</a>
+      <a href="{{ feedback_url }}" class="flex items-center gap-3 rounded-lg px-3 py-3 font-medium transition hover:bg-white/10 {% if request.path == feedback_url %}bg-white/10{% endif %}">{% include "partials/icon.html" with name="message" cls="h-5 w-5 text-sun" %} Ask anonymously</a>
+      <a href="{% url 'tracker:report' %}" class="mt-2 flex items-center gap-3 rounded-lg border-t border-white/10 px-3 pb-2 pt-4 text-sm text-sky-100">{% include "partials/icon.html" with name="lock" cls="h-4 w-4" %} Staff sign in</a>
+    </nav>
+  </div>
+</header>
