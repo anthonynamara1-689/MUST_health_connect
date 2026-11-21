@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% comment %}
+  Gives Django's admin the MUST HealthConnect look: brand, colours and font.
+  The colours live in static/css/admin.css. Everything else is Django's admin, unchanged.
+{% endcomment %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | MUST HealthConnect admin{% endblock %}
+
+{# One light theme, matching the rest of the system (no dark-mode switch). #}
+{% block dark-mode-vars %}{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/admin.css' %}">{% endblock %}
+{% block extrahead %}{{ block.super }}<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}" class="hc-brand">
+    <span class="hc-must">MUST</span>
+    <span class="hc-name">HealthConnect</span>
+    <span class="hc-badge">Admin</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block welcome-msg %}<span class="hc-welcome">Signed in as <strong>{% firstof user.get_short_name user.get_username %}</strong></span>{% endblock %}
+
+{% block userlinks %}
+  <a href="{% url 'tracker:report' %}">Staff pages</a>
+  <a href="{% url 'portal:home' %}">Student site</a>
+  {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">Change password</a>{% endif %}
+  <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+    {% csrf_token %}
+    <button type="submit">Log out</button>
+  </form>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

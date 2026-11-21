@@ -1,0 +1,172 @@
+/* MUST HealthConnect look for Django's admin. Loaded after Django's own CSS,
+   so these values win. Plain CSS: no Tailwind rebuild needed. */
+@font-face { font-family: "Public Sans"; font-weight: 400; font-display: swap; src: url("../fonts/public-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 600; font-display: swap; src: url("../fonts/public-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 700; font-display: swap; src: url("../fonts/public-sans-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 800; font-display: swap; src: url("../fonts/public-sans-latin-800-normal.woff2") format("woff2"); }
+
+/* ---------- The system's colours, mapped onto Django's admin variables ---------- */
+:root {
+  --primary: #14508C;            /* brand blue: table and box headings */
+  --secondary: #0E3F73;          /* navy */
+  --accent: #FFB547;             /* sun */
+  --primary-fg: #fff;
+
+  --body-fg: #1B2430;
+  --body-bg: #fff;
+  --body-quiet-color: #6B7685;
+  --body-medium-color: #4E5866;
+  --body-loud-color: #1B2430;
+
+  --header-color: #DCE7F3;
+  --header-branding-color: #fff;
+  --header-bg: #0E3F73;
+  --header-link-color: #fff;
+
+  --breadcrumbs-fg: #C3D6EA;
+  --breadcrumbs-link-fg: #fff;
+  --breadcrumbs-bg: #14508C;
+
+  --link-fg: #145A9E;
+  --link-hover-color: #0E3F73;
+  --link-selected-fg: #0E3F73;
+
+  --hairline-color: #E3E7EC;
+  --border-color: #B7C3D1;
+
+  --error-fg: #B42318;
+  --message-success-bg: #EAF6EF;
+  --message-warning-bg: #FFF4E0;
+  --message-error-bg: #FDEDEB;
+
+  --darkened-bg: #F2F5F9;
+  --selected-bg: #EEF4FA;
+  --selected-row: #FFF6E6;
+
+  --button-fg: #fff;
+  --button-bg: #14508C;
+  --button-hover-bg: #0E3F73;
+  --default-button-bg: #FFB547;
+  --default-button-hover-bg: #F2A12B;
+  --close-button-bg: #6B7685;
+  --close-button-hover-bg: #4E5866;
+  --delete-button-bg: #B42318;
+  --delete-button-hover-bg: #8F1C13;
+
+  --object-tools-fg: #fff;
+  --object-tools-bg: #14508C;
+  --object-tools-hover-bg: #0E3F73;
+
+  --font-family-primary: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-monospace: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+
+body { background: #F2F5F9; color: var(--body-fg); }
+.theme-toggle { display: none !important; }
+
+/* ---------- Header: same bar as the staff pages ---------- */
+#header { flex-shrink: 0; min-height: 72px; padding: 0 32px; background: var(--header-bg); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
+#site-name { font-size: 1rem; }
+.hc-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none !important; }
+.hc-must { background: #fff; color: #0E3F73 !important; border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+.hc-name { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.hc-badge { background: #FFB547; color: #1B2430; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 700; }
+#user-tools { text-transform: none; letter-spacing: 0; font-size: 14px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+#user-tools a { border-bottom: 0; color: #DCE7F3 !important; }
+#user-tools a:hover { color: #fff !important; text-decoration: underline; text-decoration-color: #FFB547; text-underline-offset: 4px; }
+#logout-form button { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 6px 12px; font-size: 14px; text-transform: none; letter-spacing: 0; cursor: pointer; }
+#logout-form button:hover { background: rgba(255,255,255,.18); text-decoration: none; }
+.hc-welcome { color: #C3D6EA; }
+.hc-welcome strong { color: #fff; font-weight: 600; }
+
+/* Breadcrumbs */
+div.breadcrumbs { padding: 12px 32px; font-size: 14px; }
+
+/* ---------- Content ---------- */
+#content { padding: 28px 32px; }
+#content h1 { color: #0E3F73; font-weight: 700; font-size: 1.75rem; letter-spacing: -.01em; }
+#content h2 { color: #0E3F73; }
+a:link, a:visited { color: var(--link-fg); }
+
+/* Boxes (dashboard apps, changelist, filters, fieldsets) as rounded cards */
+.module, #changelist .changelist-form-container, fieldset.module, .inline-group {
+  border-radius: 12px; overflow: hidden; border: 1px solid var(--hairline-color);
+  background: #fff; box-shadow: 0 1px 2px rgba(14,63,115,.06);
+}
+.module h2, .module caption, .inline-group h2 {
+  color: #fff; text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 600; padding: 10px 14px;
+}
+.module caption a.section { color: #fff; }
+
+/* Tables */
+thead th, tfoot td, #changelist table thead th { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: var(--body-medium-color); background: #F2F5F9; }
+tbody tr:hover td, tbody tr:hover th { background: #EEF4FA; }
+td, th { border-bottom-color: var(--hairline-color); }
+#result_list tbody th a { font-weight: 600; }
+
+/* Changelist filter panel on the right */
+#changelist-filter { border-radius: 12px; overflow: hidden; border: 1px solid var(--hairline-color); background: #fff; }
+#changelist-filter h2 { background: #0E3F73; color: #fff; text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 600; }
+#changelist-filter h3 { font-weight: 600; color: #0E3F73; }
+#changelist-filter li.selected a { color: #0E3F73 !important; font-weight: 700; border-left-color: #FFB547; }
+#changelist #toolbar { background: #fff; border-radius: 12px; border: 1px solid var(--hairline-color); padding: 10px 12px; margin-bottom: 14px; }
+#changelist .actions { background: #F2F5F9; }
+
+/* Buttons and inputs */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  border-radius: 8px; padding: 9px 16px; font-weight: 600; letter-spacing: 0;
+}
+.button.default, input[type=submit].default, .submit-row input.default { color: #1B2430; text-transform: none; }
+.submit-row { background: #F2F5F9; border: 1px solid var(--hairline-color); border-radius: 12px; }
+.submit-row a.deletelink { border-radius: 8px; }
+.object-tools a:link, .object-tools a:visited { border-radius: 8px; text-transform: none; letter-spacing: 0; font-weight: 600; padding: 7px 14px; }
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=number],
+input[type=tel], input[type=search], textarea, select, .vTextField {
+  border-radius: 8px; border-color: var(--border-color); padding: 7px 10px;
+}
+input:focus, textarea:focus, select:focus { border-color: #14508C; outline: 3px solid rgba(20,80,140,.18); outline-offset: 0; }
+
+/* Messages */
+ul.messagelist li { border-radius: 10px; margin-bottom: 8px; color: #1B2430; }
+
+/* Left navigation */
+#nav-sidebar { background: #fff; border-right: 1px solid var(--hairline-color); }
+#nav-sidebar .module { border-radius: 0; border: 0; box-shadow: none; }
+#nav-sidebar .current-model { background: #FFF6E6; }
+#nav-sidebar .current-model a { color: #0E3F73; font-weight: 700; }
+#toggle-nav-sidebar { background: #fff; border-color: var(--hairline-color); color: #145A9E; }
+
+/* ---------- Login page (body.login beats Django's login.css, which loads later) ---------- */
+body.login { background: #F2F5F9; }
+body.login #container { border-radius: 20px; overflow: hidden; border: 0; box-shadow: 0 24px 60px -18px rgba(7,31,59,.45); margin-top: 72px; width: 26rem; max-width: calc(100% - 32px); }
+body.login #header { justify-content: center; padding: 22px 24px; }
+body.login #content { padding: 28px 28px 32px; }
+body.login .form-row label { font-weight: 600; color: #1B2430; }
+body.login .submit-row { background: none; border: 0; padding: 12px 0 0; margin: 0; }
+body.login .submit-row input { width: 100%; padding: 13px; font-size: 15px; background: #FFB547; color: #1B2430; border-radius: 8px; }
+body.login .submit-row input:hover { background: #F2A12B; }
+body.login .errornote { border-radius: 10px; }
+
+@media (max-width: 767px) {
+
+  #content, div.breadcrumbs { padding-left: 16px; padding-right: 16px; }
+  #user-tools { gap: 12px; font-size: 13px; }
+}
+
+/* Small screens: brand on one line, links underneath (beats Django's responsive.css). */
+@media (max-width: 1024px) {
+  html body #header { display: block; height: auto; min-height: 0; flex-shrink: 0; padding: 14px 16px; }
+  html body #user-tools { margin-top: 10px; gap: 6px 14px; line-height: 1.4; }
+}
+
+/* Section headings inside add/change forms (e.g. "Event attendance") */
+fieldset .fieldset-heading, fieldset .inline-heading {
+  background: #14508C; border-color: #14508C; color: #fff;
+  text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 600; padding: 10px 14px;
+}
+.submit-row input.default { text-transform: none; }
+/* #content h2 above is navy; headings sitting on a blue bar must stay white. */
+#content .module h2, #content .module caption, #content .inline-group h2,
+#content fieldset .fieldset-heading, #content fieldset .inline-heading, #changelist-filter h2 { color: #fff; }
+#content .submit-row input.default { text-transform: none; }
