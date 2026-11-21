@@ -186,7 +186,7 @@ class Command(BaseCommand):
         # "Peer educators" group: may plan events and record attendance in the admin,
         # and look at (not change) stock movements and the audit log. No superuser powers.
         group, _ = Group.objects.get_or_create(name="Peer educators")
-        group.permissions.set(Permission.objects.filter(
+        tracker_perms = Permission.objects.filter(
             content_type__app_label="tracker",
             codename__in=[
                 "add_event", "change_event", "view_event",
@@ -194,7 +194,10 @@ class Command(BaseCommand):
                 "view_location", "view_policyactivity",
                 "view_stockmovement", "view_auditlog", "view_stocklevel", "view_item",
             ],
-        ))
+        )
+        # Peer educators may read (not change or delete) the students' anonymous messages.
+        feedback_perm = Permission.objects.filter(content_type__app_label="portal", codename="view_feedback")
+        group.permissions.set(tracker_perms | feedback_perm)
 
         # Demo peer educator (staff, but not a superuser). Change the password before showing anyone.
         User = get_user_model()
